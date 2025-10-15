@@ -1,53 +1,29 @@
 import "./PostStatus.css";
 import { useState } from "react";
-import { AuthToken, Status } from "tweeter-shared";
 import { useMessageActions } from "../toaster/MessageHooks";
 import { useUserInfo } from "../userInfo/UserInfoHooks";
+import { PostStatusView, PostStatusPresenter } from "../presenter/PostStatusPresenter";
 
 const PostStatus = () => {
     const { displayInfoMessage, displayErrorMessage, deleteMessage } = useMessageActions();
 
   const { currentUser, authToken } = useUserInfo();
   const [post, setPost] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   const submitPost = async (event: React.MouseEvent) => {
     event.preventDefault();
-
-    var postingStatusToastId = "";
-
-    try {
-      setIsLoading(true);
-      postingStatusToastId = displayInfoMessage(
-        "Posting status...",
-        0
-      );
-
-      const status = new Status(post, currentUser!, Date.now());
-
-      await postStatus(authToken!, status);
-
+      await presenter.submitPost(event, post, currentUser!, authToken!);
       setPost("");
-      displayInfoMessage("Status posted!", 2000);
-    } catch (error) {
-      displayErrorMessage(
-        `Failed to post the status because of exception: ${error}`,
-      );
-    } finally {
-      deleteMessage(postingStatusToastId);
-      setIsLoading(false);
-    }
   };
 
-  const postStatus = async (
-    authToken: AuthToken,
-    newStatus: Status
-  ): Promise<void> => {
-    // Pause so we can see the logging out message. Remove when connected to the server
-    await new Promise((f) => setTimeout(f, 2000));
+  const listener: PostStatusView = {
+    displayErrorMessage: displayErrorMessage, 
+    displayInfoMessage: displayInfoMessage,
+    deleteMessage: deleteMessage
+  }
 
-    // TODO: Call the server to post the status
-  };
+  const [presenter] = useState(new PostStatusPresenter(listener));
+  
 
   const clearPost = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -59,6 +35,7 @@ const PostStatus = () => {
   };
 
   return (
+  <div className={presenter.isLoading ? "loading" : ""}>
     <form>
       <div className="form-group mb-3">
         <textarea
@@ -79,9 +56,9 @@ const PostStatus = () => {
           type="button"
           disabled={checkButtonStatus()}
           style={{ width: "8em" }}
-          onClick={submitPost}
+           onClick={(event) => submitPost(event)}
         >
-          {isLoading ? (
+          {presenter.isLoading ? (
             <span
               className="spinner-border spinner-border-sm"
               role="status"
@@ -96,12 +73,13 @@ const PostStatus = () => {
           className="btn btn-md btn-secondary"
           type="button"
           disabled={checkButtonStatus()}
-          onClick={clearPost}
+          onClick={(event) => clearPost(event)}
         >
           Clear
         </button>
       </div>
     </form>
+  </div>
   );
 };
 

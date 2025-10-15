@@ -5,7 +5,6 @@ import { useMessageActions } from "../toaster/MessageHooks";
 const OAuth = () =>{
 
       const { displayInfoMessage } = useMessageActions();
-    //const { displayInfoMessage } = useToastListener();
 
    const displayInfoMessageWithDarkBackground = (message: string): void => {
      displayInfoMessage(
