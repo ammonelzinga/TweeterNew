@@ -19,8 +19,6 @@ interface Props<T, U> {
 const ItemScroller = <T,U>(props: Props<T, U>) => {
   const {displayErrorMessage} = useMessageActions();
   const [items, setItems] = useState<T[]>([]);
-  const [newItems, setNewItems] = useState<T[]>([]);
-  const [changedDisplayedUser, setChangedDisplayedUser] = useState(true);
   const { setDisplayedUser } = useUserInfoActions();
   const { displayedUser, authToken } = useUserInfo();
   const { displayedUser: displayedUserAliasParam } = useParams();
@@ -28,7 +26,7 @@ const ItemScroller = <T,U>(props: Props<T, U>) => {
 
    const listener: PagedItemView<T> = {
     addItems: (newItems: T[]) =>
-      setNewItems(newItems), 
+      setItems((prevItems) => [...prevItems, ...newItems]),
     displayErrorMessage: displayErrorMessage 
 
   }
@@ -54,28 +52,12 @@ const ItemScroller = <T,U>(props: Props<T, U>) => {
   // Initialize the component whenever the displayed user changes
   useEffect(() => {
     reset();
+    loadMoreItems();
   }, [displayedUser]);
 
-  // Load initial items whenever the displayed user changes. Done in a separate useEffect hook so the changes from reset will be visible.
-  useEffect(() => {
-    if(changedDisplayedUser) {
-      loadMoreItems();
-    }
-  }, [changedDisplayedUser]);
-
-  // Add new items whenever there are new items to add
-  useEffect(() => {
-    if(newItems) {
-      setItems([...items, ...newItems]);
-    }
-  }, [newItems])
 
   const reset = async () => {
-    setItems([]);
-    setNewItems([]);
-   
-    setChangedDisplayedUser(true);
-
+    setItems(() => []);
     presenter.current!.reset();
   }
 
@@ -83,7 +65,6 @@ const ItemScroller = <T,U>(props: Props<T, U>) => {
   
   const loadMoreItems = async () => {
     presenter.current!.loadMoreItems(authToken!, displayedUser!);
-    setChangedDisplayedUser(false);
   };
 
   return (
