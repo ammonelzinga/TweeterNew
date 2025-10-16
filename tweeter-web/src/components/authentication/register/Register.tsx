@@ -15,6 +15,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [rememberMe, setRememberMe] = useState(false);
+  const[isLoading, setIsLoading] = useState(false);
 
 
   const navigate = useNavigate();
@@ -34,7 +35,9 @@ const Register = () => {
 
   const registerOnEnter = (event: React.KeyboardEvent<HTMLElement>) => {
     if (event.key == "Enter" && !checkSubmitButtonStatus()) {
+      setIsLoading(true);
       doRegister();
+      setIsLoading(false);
     }
   };
 
@@ -135,7 +138,7 @@ const Register = () => {
       switchAuthenticationMethodFactory={switchAuthenticationMethodFactory}
       setRememberMe={setRememberMe}
       submitButtonDisabled={checkSubmitButtonStatus}
-      isLoading={presenter.isLoading}
+      isLoading={isLoading}
       submit={doRegister}
     />
   );

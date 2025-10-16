@@ -2,28 +2,31 @@ import "./PostStatus.css";
 import { useState } from "react";
 import { useMessageActions } from "../toaster/MessageHooks";
 import { useUserInfo } from "../userInfo/UserInfoHooks";
-import { PostStatusView, PostStatusPresenter } from "../presenter/PostStatusPresenter";
+import {PostStatusPresenter } from "../presenter/PostStatusPresenter";
+import {MessageView} from "../presenter/Presenter";
 
 const PostStatus = () => {
     const { displayInfoMessage, displayErrorMessage, deleteMessage } = useMessageActions();
 
   const { currentUser, authToken } = useUserInfo();
   const [post, setPost] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const submitPost = async (event: React.MouseEvent) => {
+    setIsLoading(true);
     event.preventDefault();
       await presenter.submitPost(event, post, currentUser!, authToken!);
+      setIsLoading(false);
       setPost("");
   };
 
-  const listener: PostStatusView = {
+  const listener: MessageView = {
     displayErrorMessage: displayErrorMessage, 
     displayInfoMessage: displayInfoMessage,
     deleteMessage: deleteMessage
   }
 
   const [presenter] = useState(new PostStatusPresenter(listener));
-  
 
   const clearPost = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -35,7 +38,7 @@ const PostStatus = () => {
   };
 
   return (
-  <div className={presenter.isLoading ? "loading" : ""}>
+  <div className={isLoading ? "loading" : ""}>
     <form>
       <div className="form-group mb-3">
         <textarea
@@ -58,7 +61,7 @@ const PostStatus = () => {
           style={{ width: "8em" }}
            onClick={(event) => submitPost(event)}
         >
-          {presenter.isLoading ? (
+          {isLoading ? (
             <span
               className="spinner-border spinner-border-sm"
               role="status"

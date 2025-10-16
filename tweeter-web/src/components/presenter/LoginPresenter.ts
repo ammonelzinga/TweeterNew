@@ -1,54 +1,26 @@
 import { User, AuthToken } from "tweeter-shared";
-import { UserService } from "../modelANDservice/service/UserService";
-import { To, NavigateOptions } from "react-router-dom";
+import { AuthenticationPresenter, AuthenticationView } from "./AuthenticationPresenter";
 
-
-export interface LoginView{
-    updateUserInfo: (currentUser: User, displayedUser: User | null, authToken: AuthToken, remember: boolean) => void, 
-    navigate: (to: To, options?: NavigateOptions) => void, 
-    displayErrorMessage: (message: string) => void
-}
-
-export class LoginPresenter{
-    private _isLoading = false;
-    private _view: LoginView;
-    private userService: UserService;
-    public constructor(view: LoginView){
-        this._view = view;
-        this.userService = new UserService;
-    }
-    public get view(){
-        return this._view;
-    }
-    public set view(value: LoginView){
-        this._view = value;
-    }
-    public get isLoading(){
-        return this._isLoading;
-    }
-    public set isLoading(value: boolean){
-        this._isLoading = value;
+export class LoginPresenter extends AuthenticationPresenter{
+     public get view(){
+        return super.view as AuthenticationView;
     }
 
     public async doLogin (alias: string, password: string, rememberMe: boolean, originalUrl?: string) {
-        try {
-          this.isLoading = (true);
-    
-          const [user, authToken] = await this.userService.login(alias, password);
-    
-          this._view.updateUserInfo(user, user, authToken, rememberMe);
-    
-          if (!!originalUrl) {
-            this._view.navigate(originalUrl);
-          } else {
-            this._view.navigate(`/feed/${user.alias}`);
-          }
-        } catch (error) {
-          this._view.displayErrorMessage(
-            `Failed to log user in because of exception: ${error}`
-          );
-        } finally {
-          this._isLoading = false;
-        }
+        this.doFailureReportingOperation(async () => {
+          this.authenticateThenNavigate(alias, password, rememberMe, "", "", originalUrl);
+        }, "log user in")  
       };
+
+      protected async authenticateUser(alias: string, password: string): Promise<[User, AuthToken]> {
+        return this.userService.login(alias, password);
+    }
+
+      protected navigate(originalUrl?: string, user?: User): void {
+        if (!!originalUrl) {
+            this.view.navigate(originalUrl);
+          } else {
+            this.view.navigate(`/feed/${user!.alias}`);
+          }
+    }
 }

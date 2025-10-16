@@ -6,7 +6,8 @@ import AuthenticationFormLayout from "../AuthenticationFormLayout";
 import AuthenticationFields  from "../AuthenticationFields";
 import { useMessageActions } from "../../toaster/MessageHooks";
 import { useUserInfoActions } from "../../userInfo/UserInfoHooks";
-import { LoginPresenter, LoginView } from "../../presenter/LoginPresenter";
+import { LoginPresenter } from "../../presenter/LoginPresenter";
+import {AuthenticationView} from "../../presenter/AuthenticationPresenter";
 
 interface Props {
   originalUrl?: string;
@@ -16,6 +17,7 @@ const Login = (props: Props) => {
   const [alias, setAlias] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const[isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const { updateUserInfo } = useUserInfoActions();
@@ -30,7 +32,7 @@ const Login = (props: Props) => {
       doLogin();
     }
   };
-const listener: LoginView = {
+const listener: AuthenticationView = {
     updateUserInfo: updateUserInfo,
     navigate: navigate,
     displayErrorMessage: displayErrorMessage
@@ -39,7 +41,9 @@ const listener: LoginView = {
   const [presenter] = useState(new LoginPresenter(listener));
 
   const doLogin = async () => {
+     setIsLoading(true);
     presenter.doLogin(alias, password, rememberMe, props.originalUrl);
+    setIsLoading(false);
   };
 
   const inputFieldFactory = () => {
@@ -72,7 +76,7 @@ const listener: LoginView = {
       switchAuthenticationMethodFactory={switchAuthenticationMethodFactory}
       setRememberMe={setRememberMe}
       submitButtonDisabled={checkSubmitButtonStatus}
-      isLoading={presenter.isLoading}
+      isLoading={isLoading}
       submit={doLogin}
     />
   );

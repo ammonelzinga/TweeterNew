@@ -1,82 +1,45 @@
 import { User, AuthToken } from "tweeter-shared";
-import { UserService } from "../modelANDservice/service/UserService";
 import { Buffer } from "buffer";
+import { AuthenticationPresenter, AuthenticationView } from "./AuthenticationPresenter";
 
-
-
-export interface RegisterView{
-    displayErrorMessage: (message: string) => void;
-    updateUserInfo: (
-        currentUser: User,
-        displayedUser: User | null,
-        authToken: AuthToken,
-        remember: boolean
-      ) => void, 
-      navigate: (location: string) => void,
-      setImageUrl: (url: string) => void
+export interface RegisterView extends AuthenticationView{
+    setImageUrl: (url: string) => void
 }
 
-export class RegisterPresenter{
-    private _view: RegisterView;
-    private userService: UserService;
-    private _isLoading = false;
+export class RegisterPresenter extends AuthenticationPresenter{
     private _userImageBytes: Uint8Array;
     private _imageFileExtension = "";
 
     public constructor(view: RegisterView){
-        this._view = view;
-        this.userService = new UserService();
+        super(view);
         this._userImageBytes = new Uint8Array();
 
     }
     public get userImageBytes(){
       return this._userImageBytes;
     }
-    public get view(){
-        return this._view;
+      public get view() : RegisterView{
+        return super.view as RegisterView;
     }
 
-    public get isLoading(){
-        return this._isLoading;
-    }
-    public set isLoading(value: boolean){
-        this._isLoading = value;
-    }
     public get imageFileExtension(){
       return this._imageFileExtension;
     }
 
-    public async doRegister (
-        firstName: string,
-        lastName: string,
-        alias: string,
-        password: string,
-        rememberMe: boolean){
+    public async doRegister (firstName: string, lastName: string, alias: string,password: string, rememberMe: boolean){
         
-        
-        try {
-          this._isLoading = true;
-    
-          const [user, authToken] = await this.userService.register(
-            firstName,
-            lastName,
-            alias,
-            password,
-            this._userImageBytes,
-            this.imageFileExtension
-          );
-    
-          this._view.updateUserInfo(user, user, authToken, rememberMe);
-          this._view.navigate(`/feed/${user.alias}`);
-        } catch (error) {
-          this._view.displayErrorMessage(
-            `Failed to register user because of exception: ${error}`
-          );
-        } finally {
-          this._isLoading = (false);
-        }
+       this.doFailureReportingOperation(async () => {
+            this.authenticateThenNavigate(alias, password, rememberMe, firstName, lastName, "");
+        }, "register user");
       };
 
+       protected async authenticateUser(alias: string, password: string, firstName: string, lastName: string): Promise<[User, AuthToken]> {
+        return this.userService.register(firstName, lastName, alias, password, this._userImageBytes, this.imageFileExtension);
+    }
+
+     protected navigate(originalUrl?: string, user?: User){
+      this.view.navigate(`/feed/${user!.alias}`);
+    }
 
       public handleImageFile (file: File | undefined) {
           if (file) {
