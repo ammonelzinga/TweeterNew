@@ -1,6 +1,6 @@
 import "./Login.css";
 import "bootstrap/dist/css/bootstrap.css";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthenticationFormLayout from "../AuthenticationFormLayout";
 import AuthenticationFields  from "../AuthenticationFields";
@@ -11,6 +11,7 @@ import {AuthenticationView} from "../../presenter/AuthenticationPresenter";
 
 interface Props {
   originalUrl?: string;
+  presenter?: LoginPresenter;
 }
 
 const Login = (props: Props) => {
@@ -38,11 +39,19 @@ const listener: AuthenticationView = {
     displayErrorMessage: displayErrorMessage
   }
 
-  const [presenter] = useState(new LoginPresenter(listener));
+ const presenterRef = useRef<LoginPresenter | null>(null);
+ if (!presenterRef.current) {
+    presenterRef.current = props.presenter ?? new LoginPresenter(listener);
+ }
+
+  //Create a new presenter whenver 'remeberMe' is updated so it will have a listener witht the correct 'rememberMe' value
+  useEffect(() => {
+    presenterRef.current = props.presenter ?? new LoginPresenter(listener);
+  }, [rememberMe]);
 
   const doLogin = async () => {
      setIsLoading(true);
-    presenter.doLogin(alias, password, rememberMe, props.originalUrl);
+    presenterRef.current?.doLogin(alias, password, rememberMe, props.originalUrl);
     setIsLoading(false);
   };
 
