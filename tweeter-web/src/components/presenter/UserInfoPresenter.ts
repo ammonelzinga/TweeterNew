@@ -81,7 +81,9 @@ export class UserInfoPresenter extends Presenter<UserInfoView>{
         event.preventDefault();
         
         this.doFailureReportingOperation(async () => {
-          const toastId = this.view.displayInfoMessage(`Following ${displayedUser!.name}...`, 2000);
+          const toastId = this.view.displayInfoMessage(`Following ${displayedUser!.name}...`, 0);
+          this._isLoading = (true);
+          this.view.setDisplayedUser(displayedUser);
           const [followerCount, followeeCount] = await this.followService.follow(
             authToken!,
             displayedUser!
@@ -90,6 +92,7 @@ export class UserInfoPresenter extends Presenter<UserInfoView>{
           this._isFollower = (true);
           this._followerCount =(followerCount);
           this._followeeCount = (followeeCount);
+          this._isLoading = (false);
         this.view.setDisplayedUser(displayedUser);
        this.view.deleteMessage(toastId);}, "follow user");
        
@@ -105,12 +108,15 @@ export class UserInfoPresenter extends Presenter<UserInfoView>{
         
         this.doFailureReportingOperation(async () => {
           const toastId = this.view.displayInfoMessage(
-            `Unfollowing ${displayedUser!.name}...`, 2000);
+            `Unfollowing ${displayedUser!.name}...`, 0);
+            this._isLoading = (true);
+            this.view.setDisplayedUser(displayedUser);
           const [followerCount, followeeCount] = await this.followService.unfollow(authToken!,displayedUser!
           );
           this._isFollower = (false);
           this._followerCount = (followerCount);
           this._followeeCount = (followeeCount);
+          this._isLoading = (false);
         this.view.setDisplayedUser(displayedUser);
       this.view.deleteMessage(toastId);}, "unfollow user");
         

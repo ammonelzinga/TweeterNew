@@ -1,0 +1,7 @@
+BUCKET='ammonelzinga-cs340-bucket'
+LAMBDA_ROLE='arn:aws:iam::723754058455:role/cs340lambdaEmail'
+EDIT_LAMBDALIST='
+tweeterGetFollowees | lambda/follow/GetFolloweesLambda.handler
+tweeterGetFollowers | lambda/follow/GetFollowersLambda.handler
+'
+LAMBDALAYER_ARN='arn:aws:lambda:us-west-2:723754058455:layer:TweeterLambdaLayer:10'

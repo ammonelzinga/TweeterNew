@@ -1,8 +1,9 @@
 import { Buffer } from "buffer";
 import { AuthToken, FakeData, User } from "tweeter-shared";
+import { ServerFacade } from "../../network/ServerFacade";
 
 export class UserService{
-    
+      private serverFacade = new ServerFacade();
       public async register (
         firstName: string,
         lastName: string,
@@ -15,14 +16,19 @@ export class UserService{
         const imageStringBase64: string =
           Buffer.from(userImageBytes).toString("base64");
     
-        // TODO: Replace with the result of calling the server
-        const user = FakeData.instance.firstUser;
-    
-        if (user === null) {
-          throw new Error("Invalid registration");
+        const RegisterRequest = {
+          token: "unecessary",
+          firstName: firstName,
+          lastName: lastName,
+          userAlias: alias,
+          password: password,
+          imageStringBase64: imageStringBase64,
+          imageFileExtension: imageFileExtension
+
         }
-    
-        return [user, FakeData.instance.authToken];
+        const [user, token] = await this.serverFacade.register(RegisterRequest);
+        const tokenAuth = new AuthToken(token, Date.now());
+        return [user, tokenAuth];
       };
 
 
@@ -30,20 +36,29 @@ export class UserService{
         alias: string,
         password: string
       ): Promise<[User, AuthToken]>{
-        // TODO: Replace with the result of calling the server
-        const user = FakeData.instance.firstUser;
-    
-        if (user === null) {
-          throw new Error("Invalid alias or password");
+        
+        const LoginRequest = {
+          token: "unecessary",
+          userAlias: alias,
+          password: password,
+
         }
-    
-        return [user, FakeData.instance.authToken];
+        const [user, token] = await this.serverFacade.login(LoginRequest);
+        const tokenAuth = new AuthToken(token, Date.now());
+        return [user, tokenAuth];
       };
 
 
       public async logout (authToken: AuthToken): Promise<void> {
         // Pause so we can see the logging out message. Delete when the call to the server is implemented.
-        await new Promise((res) => setTimeout(res, 1000));
+        //await new Promise((res) => setTimeout(res, 1000));
+
+        const TweeterRequest = {
+          token: authToken.token,
+          userAlias: "unecessary"
+        }
+
+        await this.serverFacade.logout(TweeterRequest);
       };
 
 
@@ -51,8 +66,13 @@ export class UserService{
         authToken: AuthToken,
         alias: string
       ): Promise<User | null> {
-        // TODO: Replace with the result of calling server
-        return FakeData.instance.findUserByAlias(alias);
+        const TweeterRequest = {
+          token: authToken.token,
+          userAlias: alias,
+        }
+
+        const user = await this.serverFacade.getUser(TweeterRequest);
+        return user;
       };
 
 

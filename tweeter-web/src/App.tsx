@@ -57,7 +57,7 @@ const AuthenticatedRoutes = () => {
           presenterGenerator={(view: PagedItemView<Status>) => new FeedPresenter(view)}
            itemComponentGenerator={(itemProp: itemProps<Status>) => {
                 const currentItem= itemProp.item;
-              return <StatusItem item={currentItem} featureUrl="npm sfeed" />}}
+              return <StatusItem item={currentItem} featureUrl="feed" />}}
         />
         } 
         />
