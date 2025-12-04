@@ -3,5 +3,17 @@ LAMBDA_ROLE='arn:aws:iam::723754058455:role/cs340lambdaEmail'
 EDIT_LAMBDALIST='
 tweeterGetFollowees | lambda/follow/GetFolloweesLambda.handler
 tweeterGetFollowers | lambda/follow/GetFollowersLambda.handler
+tweeterRegister | lambda/user/RegisterLambda.handler
+tweeterGetUser | lambda/user/GetUserLambda.handler
+tweeterGetFeed | lambda/status/GetFeedLambda.handler
+tweeterGetStory | lambda/status/GetStoryLambda.handler
+tweeterPostUnfollow | lambda/follow/PostUnfollowLambda.handler
+tweeterGetIsFollowerStatus | lambda/follow/GetIsFollowerStatusLambda.handler
+tweeterGetFolloweeCount | lambda/follow/GetFolloweeCountLambda.handler
+tweeterPostFollow | lambda/follow/PostFollowLambda.handler
+tweeterLogout | lambda/user/LogoutLambda.handler
+tweeterPostStatus | lambda/status/PostStatusLambda.handler
+tweeterGetFollowerCount | lambda/follow/GetFollowerCountLambda.handler
+tweeterLogin | lambda/user/LoginLambda.handler
 '
-LAMBDALAYER_ARN='arn:aws:lambda:us-west-2:723754058455:layer:TweeterLambdaLayer:10'
+LAMBDALAYER_ARN='arn:aws:lambda:us-west-2:723754058455:layer:dynamolayer:5'

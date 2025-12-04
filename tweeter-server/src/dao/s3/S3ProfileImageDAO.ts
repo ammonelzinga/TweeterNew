@@ -23,13 +23,12 @@ export class S3ProfileImageDAO implements profileImageDAOInterface {
       Bucket: this.bucketName,
       Key: "image/" + fileName,
       Body: decodedImageBuffer,
-      ContentType: "image/png",
-      ACL: ObjectCannedACL.public_read,
+      ContentType: "image/png"
     };
     const c = new PutObjectCommand(s3Params);
-    const client = new S3Client({ region: this.region});
+    
     try {
-      await client.send(c);
+      await this.client.send(c);
       return (
       `https://${this.bucketName}.s3.${this.region}.amazonaws.com/image/${fileName}`
       );

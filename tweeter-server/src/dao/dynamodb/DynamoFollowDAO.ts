@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand, BatchGetCommand, PutCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, QueryCommand, BatchGetCommand, PutCommand, DeleteCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { User, UserDto } from "tweeter-shared";
 import {Follow} from "tweeter-shared";
 import {followDAOInterface} from "../../dao/DAOinterfaces/followDAOInterface";
@@ -76,14 +76,13 @@ export class DynamoFollowDAO implements followDAOInterface {
     async getFollowStatus(followerAlias: string, followeeAlias: string): Promise<boolean> {
         const params = {
             TableName: this.tableName,
-            KeyConditionExpression: "follower_handle = :f AND followee_handle = :e",
-            ExpressionAttributeValues: {
-                ":f": followerAlias,
-                ":e": followeeAlias
+            Key: {
+                follower_handle: followerAlias,
+                followee_handle: followeeAlias
             }
         };
-        const data = await this.client.send(new QueryCommand(params));
-        return data.Count ? true : false;
+        const data = await this.client.send(new GetCommand(params));
+        return !!data.Item;
     }
 
     async getFolloweeCount(userAlias: string): Promise<number> {

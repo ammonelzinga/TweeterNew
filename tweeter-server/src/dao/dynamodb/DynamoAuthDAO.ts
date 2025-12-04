@@ -64,7 +64,7 @@ export class DynamoAuthDAO implements authenticationDAOInterface {
                 "#ts": "timestamp"
             },
             ExpressionAttributeValues: {
-                ":newTimestamp": {N: `${Date.now()}`}
+                ":newTimestamp": Date.now()
             }
         });
         await this.client.send(command);

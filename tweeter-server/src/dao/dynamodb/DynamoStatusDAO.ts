@@ -101,12 +101,8 @@ export class DynamoStatusDAO implements statusDAOInterface {
         const data = await this.client.send(new QueryCommand(params));
 
         const statuses: StatusDto[] = (data.Items ?? []).map(item => ({
-            user:{
-                alias: userAlias,
-                firstName: "",
-                lastName: "",
-                imageUrl: ""
-            },
+        
+            user: item.user as UserDto,
             post: item.post,
             timestamp: item.timestamp,
             segments: item.segments as PostSegmentDto[]
