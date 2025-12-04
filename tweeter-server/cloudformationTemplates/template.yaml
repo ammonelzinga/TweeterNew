@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Social media backend DynamoDB tables + S3 bucket.
+
+Parameters:
+  ProfileBucketName:
+    Type: String
+    Description: Globally unique bucket name for profile images.
+
+Resources:
+
+  ###############################################################
+  # USERS TABLE
+  ###############################################################
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: users
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 8
+        WriteCapacityUnits: 1
+      AttributeDefinitions:
+        - AttributeName: alias
+          AttributeType: S
+      KeySchema:
+        - AttributeName: alias
+          KeyType: HASH
+
+  ###############################################################
+  # FOLLOWS TABLE
+  ###############################################################
+  FollowsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: follows
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 8
+        WriteCapacityUnits: 1
+      AttributeDefinitions:
+        - AttributeName: follower_handle
+          AttributeType: S
+        - AttributeName: followee_handle
+          AttributeType: S
+      KeySchema:
+        - AttributeName: follower_handle
+          KeyType: HASH
+        - AttributeName: followee_handle
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: follows_index
+          KeySchema:
+            - AttributeName: followee_handle
+              KeyType: HASH
+            - AttributeName: follower_handle
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 8
+            WriteCapacityUnits: 1
+
+  ###############################################################
+  # STORY TABLE
+  ###############################################################
+  StoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: story
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 8
+        WriteCapacityUnits: 1
+      AttributeDefinitions:
+        - AttributeName: user_alias
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: N
+      KeySchema:
+        - AttributeName: user_alias
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+
+  ###############################################################
+  # FEED TABLE
+  ###############################################################
+  FeedTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: feed
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 8
+        WriteCapacityUnits: 1
+      AttributeDefinitions:
+        - AttributeName: feed_owner
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: N
+      KeySchema:
+        - AttributeName: feed_owner
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+
+  ###############################################################
+  # AUTH TOKENS TABLE
+  ###############################################################
+  AuthTokensTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: auth_tokens
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 8
+        WriteCapacityUnits: 1
+      AttributeDefinitions:
+        - AttributeName: token
+          AttributeType: S
+      KeySchema:
+        - AttributeName: token
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: timestamp
+        Enabled: true
+
+  ###############################################################
+  # S3 BUCKET FOR PROFILE IMAGES
+  ###############################################################
+  ProfileImageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref ProfileBucketName
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+Outputs:
+  UsersTableName:
+    Value: !Ref UsersTable
+  FollowsTableName:
+    Value: !Ref FollowsTable
+  StoryTableName:
+    Value: !Ref StoryTable
+  FeedTableName:
+    Value: !Ref FeedTable
+  AuthTokensTableName:
+    Value: !Ref AuthTokensTable
+  ProfileBucket:
+    Value: !Ref ProfileImageBucket

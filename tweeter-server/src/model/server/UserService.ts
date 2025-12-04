@@ -1,7 +1,22 @@
 import { Buffer } from "buffer";
 import { AuthToken, FakeData, User, UserDto } from "tweeter-shared";
+import bcrypt from 'bcryptjs';
+import { v4 as uuid } from 'uuid';
+import { userDAOInterface } from "../../dao/DAOinterfaces/userDAOInterface";
+import { authenticationDAOInterface } from "../../dao/DAOinterfaces/authenticationDAOInterface";
+import { profileImageDAOInterface } from "../../dao/DAOinterfaces/profileImageDAOInterface";
+import { AuthenticationService } from "./AuthenticationService";
 
 export class UserService{
+
+      private authService: AuthenticationService;
+      constructor(
+        private userDAO: userDAOInterface,
+        private authDAO: authenticationDAOInterface,
+        private profileImageDAO: profileImageDAOInterface
+      ) {
+        this.authService = new AuthenticationService(this.authDAO);
+      }
     
       public async register (
         firstName: string,
@@ -17,15 +32,26 @@ export class UserService{
           //convert imageStringBase64 to userImageBytes Uint8array??
     
         // TODO: Replace with the result of calling the server
-        const user = FakeData.instance.firstUser;
-    
-        if (user === null) {
+        const imageUrl = await this.profileImageDAO.uploadProfileImage(
+            imageFileExtension, imageStringBase64
+        );
+        const user = {
+          alias: alias,
+          firstName: firstName,
+          lastName: lastName,
+          password: password,
+          imageUrl: imageUrl
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await this.userDAO.registerUser(
+            user, hashedPassword, imageUrl
+        );
+        const authToken = await this.authService.createAuthToken(alias);
+        if (!authToken) {
           throw new Error("Invalid registration");
         }
-
-        const userDto = user.dto;
     
-        return [userDto, FakeData.instance.authToken.token];
+        return [user, authToken];
       };
 
 
@@ -34,19 +60,23 @@ export class UserService{
         password: string
       ): Promise<[UserDto, string]>{
         // TODO: Replace with the result of calling the server
-        const user = FakeData.instance.firstUser;
-    
-        if (user === null) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const {user, isValid} = await this.userDAO.validateUserCredentials(
+            alias, hashedPassword
+        );
+        if (!isValid || user === null) {
           throw new Error("Invalid alias or password");
         }
-        const userDto = user.dto;
-        return [userDto, FakeData.instance.authToken.token];
+        const authToken = await this.authService.createAuthToken(alias);
+        if (!authToken) {
+          throw new Error("Invalid login");
+        }
+        return [user, authToken];
       };
 
 
       public async logout (token: string): Promise<void> {
-        // Pause so we can see the logging out message. Delete when the call to the server is implemented.
-        //await new Promise((res) => setTimeout(res, 1000));
+        this.authService.deleteAuthToken(token);
       };
 
 
@@ -55,13 +85,13 @@ export class UserService{
         alias: string
       ): Promise<UserDto | null> {
         // TODO: Replace with the result of calling server
-        const user = FakeData.instance.findUserByAlias(alias);
+        const user = await this.userDAO.getUserByAlias(alias);
         if(user === null){
             throw new Error("User not found");
         }
-        return user.dto;
+        return user;
       };
-
 
       
 }
+
