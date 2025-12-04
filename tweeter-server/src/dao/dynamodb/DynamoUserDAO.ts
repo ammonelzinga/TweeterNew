@@ -10,6 +10,7 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import {User, UserDto} from "tweeter-shared";
 import {userDAOInterface} from "../../dao/DAOinterfaces/userDAOInterface";
+import * as bcrypt from 'bcryptjs';
 
 export class DynamoUserDAO implements userDAOInterface {
     private readonly tableName = "users";
@@ -29,6 +30,8 @@ export class DynamoUserDAO implements userDAOInterface {
                 lastName: userDto.lastName,
                 hashedPassword: hashedPassword,
                 imageUrl: imageUrl || null,
+                followerCount: 0,
+                followeeCount: 0
             },
             ConditionExpression: "attribute_not_exists(alias)"
         });
@@ -53,7 +56,9 @@ export class DynamoUserDAO implements userDAOInterface {
             lastName: response.Item.lastName,
             imageUrl: response.Item.imageUrl || undefined
         }
-        return {user, isValid: response.Item.hashedPassword === hashedPassword};
+
+        const isValid = await bcrypt.compare(hashedPassword, response.Item.hashedPassword);
+        return {user, isValid};
     }
 
     async getUserByAlias(userAlias: string): Promise<UserDto | null> {

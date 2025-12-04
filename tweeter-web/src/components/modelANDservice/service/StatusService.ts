@@ -62,7 +62,7 @@ export class StatusService{
         const PostItemRequest = 
                 {
                   token: authToken.token,
-                  userAlias: "unessecary",
+                  userAlias: newStatus.user.alias,
                   item: statusDto
                 }
                 // TODO: Replace with the result of calling server

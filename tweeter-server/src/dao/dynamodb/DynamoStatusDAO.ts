@@ -29,13 +29,21 @@ export class DynamoStatusDAO implements statusDAOInterface {
 
         const timestamp = status.timestamp;
 
+        const user_block = {
+            alias: status.user.alias,
+            firstName: status.user.firstName,
+            lastName: status.user.lastName,
+            imageUrl: status.user.imageUrl
+        };
+
         await this.client.send(new PutCommand({
             TableName: this.storyTable,
             Item: {
                 user_alias: status.user.alias,
                 timestamp: timestamp,
                 post: status.post,
-                segments: status.segments
+                segments: status.segments, 
+                user: user_block
             }
         }));
 
@@ -50,13 +58,8 @@ export class DynamoStatusDAO implements statusDAOInterface {
                     user_alias: follower.alias,
                     timestamp: timestamp,
                     post: status.post,
-                    user: {
-                        alias: status.user.alias,
-                        firstName: status.user.firstName,
-                        lastName: status.user.lastName,
-                        imageUrl: status.user.imageUrl
-                    },
-                    segments: status.segments
+                    segments: status.segments,
+                    user: user_block
                 }
             }
         }));
@@ -101,7 +104,6 @@ export class DynamoStatusDAO implements statusDAOInterface {
         const data = await this.client.send(new QueryCommand(params));
 
         const statuses: StatusDto[] = (data.Items ?? []).map(item => ({
-        
             user: item.user as UserDto,
             post: item.post,
             timestamp: item.timestamp,

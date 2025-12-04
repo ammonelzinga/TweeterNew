@@ -60,9 +60,9 @@ export class UserService{
         password: string
       ): Promise<[UserDto, string]>{
         // TODO: Replace with the result of calling the server
-        const hashedPassword = await bcrypt.hash(password, 10);
+        
         const {user, isValid} = await this.userDAO.validateUserCredentials(
-            alias, hashedPassword
+            alias, password
         );
         if (!isValid || user === null) {
           throw new Error("Invalid alias or password");

@@ -39,7 +39,7 @@ export class DynamoAuthDAO implements authenticationDAOInterface {
         });
 
         const response = await this.client.send(command);
-        if (!response.Item || response.Item.userAlias !== userAlias) {
+        if (!response.Item) {
             return null;
         }
 
