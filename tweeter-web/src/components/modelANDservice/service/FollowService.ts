@@ -89,6 +89,7 @@ export class FollowService{
 
       public async follow (
         authToken: AuthToken,
+        currentUser: User,
         userToFollow: User
       ): Promise<[followerCount: number, followeeCount: number]> {
         // Pause so we can see the follow message. Remove when connected to the server
@@ -97,14 +98,14 @@ export class FollowService{
         const UserPairRequest = 
         {
           token: authToken.token,
-          userAlias: "ISthisNECESSARY",
+          userAlias: currentUser.alias,
           selectedUserAlias: userToFollow.alias
         }
 
         await this.serverFacade.follow(UserPairRequest);
 
-        const followerCount = await this.getFollowerCount(authToken, userToFollow);
-        const followeeCount = await this.getFolloweeCount(authToken, userToFollow);
+        const followerCount = await this.getFollowerCount(authToken, currentUser);
+        const followeeCount = await this.getFolloweeCount(authToken, currentUser);
     
         return [followerCount, followeeCount];
       };
@@ -113,6 +114,7 @@ export class FollowService{
 
       public async unfollow (
         authToken: AuthToken,
+        currentUser: User,
         userToUnfollow: User
       ): Promise<[followerCount: number, followeeCount: number]> {
         // Pause so we can see the unfollow message. Remove when connected to the server
@@ -121,14 +123,14 @@ export class FollowService{
         const UserPairRequest = 
         {
           token: authToken.token,
-          userAlias: "ISthisNECESSARY",
+          userAlias: currentUser.alias,
           selectedUserAlias: userToUnfollow.alias
         }
 
         await this.serverFacade.unfollow(UserPairRequest);
 
-        const followerCount = await this.getFollowerCount(authToken, userToUnfollow);
-        const followeeCount = await this.getFolloweeCount(authToken, userToUnfollow);
+        const followerCount = await this.getFollowerCount(authToken, currentUser);
+        const followeeCount = await this.getFolloweeCount(authToken, currentUser);
     
         return [followerCount, followeeCount];
       };

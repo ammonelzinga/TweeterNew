@@ -268,7 +268,7 @@ import { ClientCommunicator } from "./ClientCommunicator/ClientCommunicator";
         }
       } else {
         console.error(response);
-        throw new Error(response.message!);
+        throw new Error(`${response.message}. Are you sure you don't already have an account? If so please login instead.`);
       }
     }
 
@@ -294,7 +294,7 @@ import { ClientCommunicator } from "./ClientCommunicator/ClientCommunicator";
         }
       } else {
         console.error(response);
-        throw new Error(response.message!);
+        throw new Error(`Invalid alias or password`);
       }
     }
 

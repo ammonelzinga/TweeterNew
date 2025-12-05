@@ -76,6 +76,7 @@ export class UserInfoPresenter extends Presenter<UserInfoView>{
       public async followDisplayedUser (
         event: React.MouseEvent,
         authToken: AuthToken,
+        currentUser: User,
         displayedUser: User
       ): Promise<void> {
         event.preventDefault();
@@ -86,6 +87,7 @@ export class UserInfoPresenter extends Presenter<UserInfoView>{
           this.view.setDisplayedUser(displayedUser);
           const [followerCount, followeeCount] = await this.followService.follow(
             authToken!,
+            currentUser!, 
             displayedUser!
           );
     
@@ -102,6 +104,7 @@ export class UserInfoPresenter extends Presenter<UserInfoView>{
       public async unfollowDisplayedUser (
         event: React.MouseEvent,
         authToken: AuthToken,
+        currentUser: User,
         displayedUser: User
       ): Promise<void> {
         event.preventDefault();
@@ -111,7 +114,7 @@ export class UserInfoPresenter extends Presenter<UserInfoView>{
             `Unfollowing ${displayedUser!.name}...`, 0);
             this._isLoading = (true);
             this.view.setDisplayedUser(displayedUser);
-          const [followerCount, followeeCount] = await this.followService.unfollow(authToken!,displayedUser!
+          const [followerCount, followeeCount] = await this.followService.unfollow(authToken!, currentUser!, displayedUser!
           );
           this._isFollower = (false);
           this._followerCount = (followerCount);

@@ -71,14 +71,14 @@ const UserInfo = () => {
    const followDisplayedUser = async (
     event: React.MouseEvent
   ): Promise<void> => {
-    presenter.followDisplayedUser(event, authToken!, displayedUser!);
+    presenter.followDisplayedUser(event, authToken!, currentUser!, displayedUser!);
   };
 
  
   const unfollowDisplayedUser = async (
     event: React.MouseEvent
   ): Promise<void> => {
-    presenter.unfollowDisplayedUser(event, authToken!, displayedUser!);
+    presenter.unfollowDisplayedUser(event, authToken!, currentUser!, displayedUser!);
   };
 
 

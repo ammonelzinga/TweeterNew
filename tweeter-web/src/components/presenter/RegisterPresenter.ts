@@ -29,7 +29,7 @@ export class RegisterPresenter extends AuthenticationPresenter{
     public async doRegister (firstName: string, lastName: string, alias: string,password: string, rememberMe: boolean){
         
        this.doFailureReportingOperation(async () => {
-            this.authenticateThenNavigate(alias, password, rememberMe, firstName, lastName, "");
+            await this.authenticateThenNavigate(alias, password, rememberMe, firstName, lastName, "");
         }, "register user");
       };
 

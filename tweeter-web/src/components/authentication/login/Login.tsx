@@ -51,7 +51,7 @@ const listener: AuthenticationView = {
 
   const doLogin = async () => {
      setIsLoading(true);
-    presenterRef.current?.doLogin(alias, password, rememberMe, props.originalUrl);
+    await presenterRef.current?.doLogin(alias, password, rememberMe, props.originalUrl);
     setIsLoading(false);
   };
 
