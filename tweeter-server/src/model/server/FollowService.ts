@@ -38,42 +38,38 @@ export class FollowService{
 
 
       public async getFolloweeCount (
-        token: string,
         userAlias: string
       ): Promise<number> {
         // TODO: Replace with the result of calling server
+        console.log("Getting followee count for " + userAlias);
         return this.followDAO.getFolloweeCount(userAlias);
       };
 
 
       public async getFollowerCount (
-        token: string,
         userAlias: string
       ): Promise<number> {
         // TODO: Replace with the result of calling server
+        console.log("Getting follower count for " + userAlias);
         return this.followDAO.getFollowerCount(userAlias);
       };
 
 
       public async follow (
-        token: string,
+        currentUserAlias: string,
         userToFollow: string
-      ): Promise<[followerCount: number, followeeCount: number]> {
-        await this.followDAO.follow(token, userToFollow);
-        const followerCount = await this.getFollowerCount(token, userToFollow);
-        const followeeCount = await this.getFolloweeCount(token, userToFollow);
-        return [followerCount, followeeCount];
+      ): Promise<void> {
+        await this.followDAO.follow(currentUserAlias, userToFollow);
+        console.log(currentUserAlias + " followed " + userToFollow);
       };
 
 
 
       public async unfollow (
-        token: string,
+        currentUserAlias: string,
         userToUnfollow: string
-      ): Promise<[followerCount: number, followeeCount: number]> {
-        await this.followDAO.unfollow(token, userToUnfollow);
-        const followerCount = await this.getFollowerCount(token, userToUnfollow);
-        const followeeCount = await this.getFolloweeCount(token, userToUnfollow);
-        return [followerCount, followeeCount];
+      ): Promise<void> {
+        await this.followDAO.unfollow(currentUserAlias, userToUnfollow);
+
       };
 }

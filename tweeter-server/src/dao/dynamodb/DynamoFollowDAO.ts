@@ -42,8 +42,10 @@ export class DynamoFollowDAO implements followDAOInterface {
         const aliases: string[] = data.Items ? data.Items.map(item => item.followee_handle) : [];
         const hasMore = data.LastEvaluatedKey ? true : false;
 
-        const followees = await this.batchGetUsers(aliases);
-        return {followees, hasMore};
+        const followees = await this.userDAO.batchGetUsers(aliases);
+        const followeesByAlias = new Map(followees.map(user => [user.alias, user]));
+        const orderedFollowees = aliases.map(alias => followeesByAlias.get(alias)!).filter(Boolean);
+        return {followees: orderedFollowees, hasMore};
     }
 
     async getFollowers(followeeAlias: string,
@@ -69,8 +71,11 @@ export class DynamoFollowDAO implements followDAOInterface {
         const aliases: string[] = data.Items ? data.Items.map(item => item.follower_handle) : [];
         const hasMore = data.LastEvaluatedKey ? true : false;
 
-        const users = await this.batchGetUsers(aliases);
-        return {followers: users, hasMore};
+        const users = await this.userDAO.batchGetUsers(aliases);
+        const usersByAlias = new Map(users.map(user => [user.alias, user]));
+        const orderedUsers = aliases.map(alias => usersByAlias.get(alias)!).filter(Boolean);
+    
+        return {followers: orderedUsers, hasMore};
     }
 
     async getFollowStatus(followerAlias: string, followeeAlias: string): Promise<boolean> {
@@ -86,11 +91,13 @@ export class DynamoFollowDAO implements followDAOInterface {
     }
 
     async getFolloweeCount(userAlias: string): Promise<number> {
+        console.log("Getting followee count for " + userAlias);
         const user = await this.userDAO.getUserByAliasWithCounts(userAlias);
         return user ? user.followeeCount : 0;
     }
 
     async getFollowerCount(userAlias: string): Promise<number> {
+        console.log("Getting follower count for " + userAlias);
         const user = await this.userDAO.getUserByAliasWithCounts(userAlias);
         return user ? user.followerCount : 0;
     }
@@ -138,26 +145,5 @@ export class DynamoFollowDAO implements followDAOInterface {
         return allFollowers;
     }
 
-    private async batchGetUsers(aliases: string[]): Promise<UserDto[]> {
-        if (aliases.length === 0) {
-            return [];
-        }
-        const keys = aliases.map(alias => ({ alias }));
-        const params = {
-            RequestItems: {
-                "users": {
-                    Keys: keys
-                }
-            }
-        };
-        const batchResult = await this.client.send(new BatchGetCommand(params));
-        const users: UserDto[]  = (batchResult.Responses?.users ?? []).map(u => ({
-        alias: u.alias,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        imageUrl: u.imageUrl
-            }));
-
-        return users;
-    }
+    
 }

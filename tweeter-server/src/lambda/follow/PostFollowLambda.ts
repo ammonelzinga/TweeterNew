@@ -12,7 +12,7 @@ export const handler = async(request: UserPairRequest): Promise<TweeterResponse>
             throw new Error("Unauthorized");
         }
     const followService = new FollowService(factory.createFollowDAO());
-    const [one, two] = await followService.follow(request.token, request.userAlias);
+    await followService.follow(request.userAlias, request.selectedUserAlias);
     return {
         success: true,
         message: null,

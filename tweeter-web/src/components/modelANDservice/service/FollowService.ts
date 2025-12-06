@@ -104,8 +104,8 @@ export class FollowService{
 
         await this.serverFacade.follow(UserPairRequest);
 
-        const followerCount = await this.getFollowerCount(authToken, currentUser);
-        const followeeCount = await this.getFolloweeCount(authToken, currentUser);
+        const followerCount = await this.getFollowerCount(authToken, userToFollow);
+        const followeeCount = await this.getFolloweeCount(authToken, userToFollow);
     
         return [followerCount, followeeCount];
       };
@@ -129,8 +129,8 @@ export class FollowService{
 
         await this.serverFacade.unfollow(UserPairRequest);
 
-        const followerCount = await this.getFollowerCount(authToken, currentUser);
-        const followeeCount = await this.getFolloweeCount(authToken, currentUser);
+        const followerCount = await this.getFollowerCount(authToken, userToUnfollow);
+        const followeeCount = await this.getFolloweeCount(authToken, userToUnfollow);
     
         return [followerCount, followeeCount];
       };

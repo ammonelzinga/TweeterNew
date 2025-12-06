@@ -32,8 +32,9 @@ export class UserService{
           //convert imageStringBase64 to userImageBytes Uint8array??
     
         // TODO: Replace with the result of calling the server
+        const fileName = `${alias}_` + uuid() + '.' + imageFileExtension;
         const imageUrl = await this.profileImageDAO.uploadProfileImage(
-            imageFileExtension, imageStringBase64
+            fileName, imageStringBase64
         );
         const user = {
           alias: alias,
@@ -48,7 +49,7 @@ export class UserService{
         );
         const authToken = await this.authService.createAuthToken(alias);
         if (!authToken) {
-          throw new Error("Invalid registration");
+          throw new Error("[Bad Request] Invalid registration");
         }
     
         return [user, authToken];
@@ -65,11 +66,11 @@ export class UserService{
             alias, password
         );
         if (!isValid || user === null) {
-          throw new Error("Invalid alias or password");
+          throw new Error("[Bad Request] Invalid alias or password");
         }
         const authToken = await this.authService.createAuthToken(alias);
         if (!authToken) {
-          throw new Error("Invalid login");
+          throw new Error("[Bad Request] Invalid login");
         }
         return [user, authToken];
       };
@@ -87,7 +88,7 @@ export class UserService{
         // TODO: Replace with the result of calling server
         const user = await this.userDAO.getUserByAlias(alias);
         if(user === null){
-            throw new Error("User not found");
+            throw new Error("[Bad Request] User not found");
         }
         return user;
       };

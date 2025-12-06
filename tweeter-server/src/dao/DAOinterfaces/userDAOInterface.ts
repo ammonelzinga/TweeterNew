@@ -25,10 +25,7 @@ export interface userDAOInterface {
     incrementFollowee(alias: string): Promise<void>;
     decrementFollowee(alias: string): Promise<void>;
 
-    updateUserProfileImage(
-        userAlias: string,
-        imageUrl: string
-    ): Promise<void>;
+    batchGetUsers(aliases: string[]): Promise<UserDto[]>;
 
 }
 

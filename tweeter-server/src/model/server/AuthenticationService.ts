@@ -10,13 +10,13 @@ export class AuthenticationService {
     async isAuthorized(tokenString: string, userAlias: string): Promise<boolean> {
         const authToken = await this.authoDAO.getAuthToken(tokenString, userAlias);
         if (!authToken) {
-            throw new Error("Invalid auth token");
+            throw new Error("[Bad Request] Invalid auth token");
         }
 
         const currentTime = Date.now();
         if (currentTime - authToken.timestamp > this.SESSION_TIME) {
             await this.authoDAO.deleteAuthToken(tokenString);
-            throw new Error("Auth token has expired");
+            throw new Error("[Bad Request] Auth token has expired");
         }
 
         await this.authoDAO.updateAuthTimestamp(tokenString);

@@ -12,7 +12,7 @@ export const handler = async(request: TweeterRequest): Promise<NumberResponse> =
             throw new Error("Unauthorized");
         }
     const followService = new FollowService(factory.createFollowDAO());
-    const count = await followService.getFollowerCount(request.token, request.userAlias);
+    const count = await followService.getFollowerCount(request.userAlias);
     return {
         success: true,
         message: null,

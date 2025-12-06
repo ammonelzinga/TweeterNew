@@ -6,7 +6,8 @@ import {
   PutCommand,
   GetCommand,
   UpdateCommand,
-  QueryCommand
+  QueryCommand,
+  BatchGetCommand
 } from "@aws-sdk/lib-dynamodb";
 import {User, UserDto} from "tweeter-shared";
 import {userDAOInterface} from "../../dao/DAOinterfaces/userDAOInterface";
@@ -85,6 +86,7 @@ export class DynamoUserDAO implements userDAOInterface {
             TableName: this.tableName,
             Key: {alias: userAlias}
         });
+        console.log("Getting user with counts for alias: " + userAlias);
         const response = await this.client.send(command);
         if (!response.Item) {
             return null;
@@ -140,18 +142,27 @@ export class DynamoUserDAO implements userDAOInterface {
         });
         await this.client.send(command);
     }
-    
-    async updateUserProfileImage(
-        userAlias: string,
-        imageUrl: string): Promise<void> {
-        const command = new UpdateCommand({
-            TableName: this.tableName,
-            Key: {alias: userAlias},
-            UpdateExpression: "set imageUrl = :imageUrl",
-            ExpressionAttributeValues: {
-                ":imageUrl": imageUrl
+
+    async batchGetUsers(aliases: string[]): Promise<UserDto[]> {
+        if (aliases.length === 0) {
+            return [];
+        }
+        const keys = aliases.map(alias => ({ alias }));
+        const params = {
+            RequestItems: {
+                "users": {
+                    Keys: keys
+                }
             }
-        });
-        await this.client.send(command);
+        };
+        const batchResult = await this.client.send(new BatchGetCommand(params));
+        const users: UserDto[]  = (batchResult.Responses?.users ?? []).map(u => ({
+        alias: u.alias,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        imageUrl: u.imageUrl
+            }));
+
+        return users;
     }
 }
