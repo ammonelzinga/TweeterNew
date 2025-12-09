@@ -85,16 +85,11 @@ import { ClientCommunicator } from "./ClientCommunicator/ClientCommunicator";
     }
 
     private async getMorePagedItems<Tdto, Titem>(
-      request: PagedItemRequest<Tdto>,
-      url: string,
+      request: PagedItemRequest<Tdto>, url: string,
       convertFunction: (response: PagedItemResponse<Tdto>) => Titem[] | null,
-      description: string
-    ): Promise<[Titem[], boolean]> {
-      const response = await this.clientCommunicator.doPost<
-        PagedItemRequest<Tdto>,
-        PagedItemResponse<Tdto>
-      >(request, url);
+      description: string): Promise<[Titem[], boolean]> {
 
+      const response = await this.clientCommunicator.doPost<PagedItemRequest<Tdto>,PagedItemResponse<Tdto>>(request, url);
       const items: Titem[] | null = convertFunction(response); 
       return this.handleItemError(response, items, description);
     }
@@ -110,81 +105,33 @@ import { ClientCommunicator } from "./ClientCommunicator/ClientCommunicator";
     }
 
     private async getCount(request: TweeterRequest, url: string, description: string): Promise<number> {
-      const response = await this.clientCommunicator.doPost<TweeterRequest,NumberResponse>(request, url);
-      const count: number | null = response.count;
-      if (response.success) {
-        if (count == null) {
-          throw new Error(`No ${description} count`);
-        } else {
-            return count;
-        }
-      } else {
-        console.error(response);
-        throw new Error(response.message ?? `Error getting ${description} count`);
-      }
+      const response = await this.executeRequest<TweeterRequest, NumberResponse>(request, url, `getting ${description} count`);
+      return this.extractCount(response, `${description}`);
     }
 
 
     public async getIsFollowerStatus(
       request: UserPairRequest
     ): Promise<boolean> {
-      const response = await this.clientCommunicator.doPost<
-        UserPairRequest,
-        BooleanResponse
-      >(request, "/follower/status");
-  
-      // Convert the UserDto array returned by ClientCommunicator to a User array
-      const value: boolean | null = response.isTrue;
-      // Handle errors    
-      if (response.success) {
-        if (value == null) {
-          throw new Error(`No follower checked`);
-        } else {
-          return value;
-        }
-      } else {
-        console.error(response);
-        throw new Error(response.message!);
-      }
+      const response = await this.executeRequest<UserPairRequest, BooleanResponse>(request, "/follower/status", "the check for follower status");
+      return this.extractBoolean(response, "is follower status");
     }
-
 
 
     public async follow(request: UserPairRequest): Promise<void> {
-      return this.followORunfollow(request,"/follower/follow","follow");
+      return this.doVoidRequest(request,"/follower/follow","follow");
     }
 
     public async unfollow(request: UserPairRequest): Promise<void> {
-      return this.followORunfollow(request,"/follower/unfollow","unfollow");
+      return this.doVoidRequest(request,"/follower/unfollow","unfollow");
     }
 
-    private async followORunfollow(request: UserPairRequest,url: string,description: string): Promise<void> {
-      const response = await this.clientCommunicator.doPost<UserPairRequest, NumberResponse>(request, url);
-
-      if(!response.success){
-        console.error(response);
-        throw new Error(response.message ?? `Error during ${description}`);
-      }
-    }
-
+    
 
     public async postStatus(
       request: PostItemRequest<StatusDto>
     ): Promise<void> {
-      const response = await this.clientCommunicator.doPost<
-        PostItemRequest<StatusDto>,
-        TweeterResponse
-      >(request, "/story/post");
-  
-      // Convert the UserDto array returned by ClientCommunicator to a User array
-      // Handle errors    
-      if (response.success) {
-
-        }
-       else {
-        console.error(response);
-        throw new Error(response.message!);
-      }
+      return this.doVoidRequest<PostItemRequest<StatusDto>>(request,"/story/post","post status");
     }
 
 
@@ -198,71 +145,73 @@ import { ClientCommunicator } from "./ClientCommunicator/ClientCommunicator";
       return this.doAuthRequest<LoginRequest, AuthenticateResponse>(request,"/user/login", "login. Try double checking your alias and password");
     }
 
-    private async doAuthRequest<Trequest extends TweeterRequest, Tresponse extends AuthenticateResponse>
-    (request: Trequest, url: string, description: string): Promise<[User, string]>{
-      const response = await this.clientCommunicator.doPost<Trequest, Tresponse>(request, url);
-      const user: User | null =
-        response.success && response.userDto
-          ? User.fromDto(response.userDto)
-          : null;
-      if (response.success) {
-        if (user == null) {
-          throw new Error(`No user found`);
-        } else {
-          return [user, response.token];
-        }
-      } else {
-        console.error(response);
-        throw new Error(response.message ?? `Error during ${description}`);
-      }
-    }
-
 
     public async logout(
       request: TweeterRequest
     ): Promise<void> {
-      const response = await this.clientCommunicator.doPost<
-        TweeterRequest,
-        TweeterResponse
-      >(request, "/user/logout");
-  
-      // Convert the UserDto array returned by ClientCommunicator to a User array
-      // Handle errors    
-      if (response.success) {
-
-      } else {
-        console.error(response);
-        throw new Error(response.message!);
-      }
+      return this.doVoidRequest<TweeterRequest>(request,"/user/logout","logout");
     }
-
-
 
     public async getUser(
       request: TweeterRequest
     ): Promise<User> {
-      const response = await this.clientCommunicator.doPost<
-        TweeterRequest,
-        UserResponse
-      >(request, "/user/get");
-  
+      const response = await this.executeRequest<TweeterRequest, UserResponse>(request, "/user/get", "getting user");
       // Convert the UserDto array returned by ClientCommunicator to a User array
       const user: User | null =
         response.success && response.userDto
           ? User.fromDto(response.userDto)
-          : null;
-      // Handle errors    
-      if (response.success) {
+          : null;    
         if (user == null) {
           throw new Error(`No user found`);
         } else {
           return user;
         }
-      } else {
-        console.error(response);
-        throw new Error(response.message!);
-      }
     }
 
+    private async executeRequest<Trequest extends TweeterRequest, Tresponse extends TweeterResponse>
+    (request: Trequest, url: string, description: string): Promise<Tresponse>{
+      const response = await this.clientCommunicator.doPost<Trequest, Tresponse>(request, url);
+      if (!response.success) {
+        console.error(response);
+        throw new Error(response.message ?? `Error during ${description}`);
+      }
+      return response;
+    }
+
+    private extractBoolean(response: BooleanResponse, description: string): boolean{
+      const value: boolean | null = response.isTrue;
+      if (value == null) {
+        throw new Error(`No ${description} value returned`);
+      }
+      return response.isTrue;
+    }
+
+    private extractCount(response: NumberResponse, description: string): number{
+      const count: number | null = response.count;
+      if (count == null) {
+        throw new Error(`No ${description} count returned`);
+      }
+      return response.count;
+    }
+
+    private async doVoidRequest<Trequest extends TweeterRequest>
+    (request: Trequest, url: string, description: string): Promise<void>{
+      const response = await this.executeRequest<Trequest, TweeterResponse>(request, url, description);
+      return;
+    }
+
+    private async doAuthRequest<Trequest extends TweeterRequest, Tresponse extends AuthenticateResponse>
+    (request: Trequest, url: string, description: string): Promise<[User, string]>{
+      const response = await this.executeRequest<Trequest, Tresponse>(request, url, description);
+      const user: User | null =
+        response.success && response.userDto
+          ? User.fromDto(response.userDto)
+          : null;
+        if (user == null) {
+          throw new Error(`No user found`);
+        } else {
+          return [user, response.token];
+        }
+    }
 
   }
