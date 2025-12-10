@@ -1,0 +1,139 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Social media backend with SQS fan-out for statuses.
+
+Parameters:
+  ProfileBucketName:
+    Type: String
+    Description: Name of S3 bucket holding your deployment ZIP.
+
+  LambdaRoleArn:
+    Type: String
+    Description: IAM role ARN for all Lambdas
+
+Resources:
+
+  ###############################################################
+  # DLQs
+  ###############################################################
+  StatusDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: status-dlq
+      MessageRetentionPeriod: 1209600 # 14 days
+
+  FeedBatchDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: feedbatch-dlq
+      MessageRetentionPeriod: 1209600 # 14 days
+
+  ###############################################################
+  # MAIN QUEUES
+  ###############################################################
+  StatusQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: status-queue
+      VisibilityTimeout: 180       # must be >= FanOutLambda Timeout
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt StatusDLQ.Arn
+        maxReceiveCount: 3
+
+  FeedBatchQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: feedbatch-queue
+      VisibilityTimeout: 300       # must be >= FeedBatchWorkerLambda Timeout
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt FeedBatchDLQ.Arn
+        maxReceiveCount: 3
+
+  ###############################################################
+  # LAMBDAS
+  ###############################################################
+  PostStatusLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: tweeterPostStatus-v2
+      Handler: lambda/status/PostStatusLambda.handler
+      Role: !Ref LambdaRoleArn
+      Runtime: nodejs20.x
+      Code:
+        S3Bucket: !Ref ProfileBucketName
+        S3Key: code/lambdalist.zip
+      Layers:
+        - arn:aws:lambda:us-west-2:723754058455:layer:dynamolayer:5
+      Timeout: 30
+      MemorySize: 128
+      Environment:
+        Variables:
+          STATUS_QUEUE_URL: !Ref StatusQueue
+
+  FanOutLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: tweeterFanOutStatus-v2
+      Handler: lambda/status/FanOutStatusLambda.handler
+      Role: !Ref LambdaRoleArn
+      Runtime: nodejs20.x
+      Code:
+        S3Bucket: !Ref ProfileBucketName
+        S3Key: code/lambdalist.zip
+      Layers:
+        - arn:aws:lambda:us-west-2:723754058455:layer:dynamolayer:5
+      Timeout: 180
+      MemorySize: 1024
+      Environment:
+        Variables:
+          FEED_BATCH_QUEUE_URL: !Ref FeedBatchQueue
+
+  FeedBatchWorkerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: tweeterFeedBatchWorker-v2
+      Handler: lambda/status/FeedBatchWorkerLambda.handler
+      Role: !Ref LambdaRoleArn
+      Runtime: nodejs20.x
+      Code:
+        S3Bucket: !Ref ProfileBucketName
+        S3Key: code/lambdalist.zip
+      Layers:
+        - arn:aws:lambda:us-west-2:723754058455:layer:dynamolayer:5
+      Timeout: 300
+      MemorySize: 2048
+      Environment:
+        Variables:
+          FEED_TABLE_NAME: feed
+
+  ###############################################################
+  # EVENT SOURCE MAPPINGS
+  ###############################################################
+  FanOutSQSTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt StatusQueue.Arn
+      FunctionName: !GetAtt FanOutLambda.Arn
+      BatchSize: 1
+      Enabled: true
+
+  FeedBatchWorkerSQSTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt FeedBatchQueue.Arn
+      FunctionName: !GetAtt FeedBatchWorkerLambda.Arn
+      BatchSize: 25
+      MaximumBatchingWindowInSeconds: 1
+      Enabled: true
+
+Outputs:
+  StatusQueueUrl:
+    Value: !Ref StatusQueue
+
+  FeedBatchQueueUrl:
+    Value: !Ref FeedBatchQueue
+
+  StatusDLQUrl:
+    Value: !Ref StatusDLQ
+
+  FeedBatchDLQUrl:
+    Value: !Ref FeedBatchDLQ

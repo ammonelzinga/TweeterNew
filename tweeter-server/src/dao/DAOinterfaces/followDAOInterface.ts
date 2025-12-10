@@ -32,4 +32,8 @@ export interface followDAOInterface {
     getAllFollowers(
         followeeAlias: string
     ): Promise<UserDto[]>;
+    getFollowersPaginated(
+        followeeAlias: string,
+        batchSize?: number
+    ): AsyncGenerator<UserDto[], void, unknown>;
 }

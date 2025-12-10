@@ -10,7 +10,6 @@ export interface statusDAOInterface {
         limit: number,
         lastStatus? : StatusDto | null
     ): Promise<{statuses: StatusDto[], hasMore: boolean}>;
-    postStatus(
-        status: StatusDto
-    ): Promise<void>;
+    writeToStory(status: StatusDto): Promise<void>;
+    writeStatusToFeed(followerAlias: string, status: StatusDto): Promise<void>;
 }

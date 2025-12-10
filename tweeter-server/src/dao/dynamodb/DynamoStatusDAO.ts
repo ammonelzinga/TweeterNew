@@ -25,6 +25,7 @@ export class DynamoStatusDAO implements statusDAOInterface {
         this.followDAO = new DynamoFollowDAO();
     }
 
+    /*
     async postStatus(status: StatusDto): Promise<void> {
 
         const timestamp = status.timestamp;
@@ -78,6 +79,49 @@ export class DynamoStatusDAO implements statusDAOInterface {
             }));    
         }
         
+    } */
+
+    async writeToStory(status: StatusDto): Promise<void> {
+        const timestamp = status.timestamp;
+
+        const user_block = {
+            alias: status.user.alias,
+            firstName: status.user.firstName,
+            lastName: status.user.lastName,
+            imageUrl: status.user.imageUrl
+        };
+
+        await this.client.send(new PutCommand({
+            TableName: this.storyTable,
+            Item: {
+                user_alias: status.user.alias,
+                timestamp: timestamp,
+                post: status.post,
+                segments: status.segments, 
+                user: user_block
+            }
+        }));
+    }
+
+    async writeStatusToFeed(followerAlias: string, status: StatusDto): Promise<void> {
+        const user_block = {
+            alias: status.user.alias,
+            firstName: status.user.firstName,
+            lastName: status.user.lastName,
+            imageUrl: status.user.imageUrl
+        };
+
+        const params = {
+            TableName: this.feedTable,
+            Item: {
+                user_alias: followerAlias,
+                timestamp: status.timestamp,
+                post: status.post,
+                segments: status.segments,
+                user: user_block
+            }
+        };
+        await this.client.send(new PutCommand(params));
     }
 
     async getStoryItems(
@@ -144,6 +188,10 @@ export class DynamoStatusDAO implements statusDAOInterface {
 
             return {statuses, hasMore: data.LastEvaluatedKey ? true : false}
     }
+
+        
+
+    
 
 }
 

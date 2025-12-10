@@ -145,5 +145,34 @@ export class DynamoFollowDAO implements followDAOInterface {
         return allFollowers;
     }
 
+    //async generator version for the sqs hopefully rcu will be okay and stop erroring out
+        async *getFollowersPaginated(followeeAlias: string, batchSize: number = 25)  {
+            let lastKey: {follower_handle: string; followee_handle:string} | undefined = undefined;
+            let hasMore = true;
+            while (hasMore) {
+                const params: any = {
+                    TableName: this.tableName,
+                    IndexName: this.followTableIndex,
+                    KeyConditionExpression: "followee_handle = :f",
+                    ExpressionAttributeValues: {
+                        ":f": followeeAlias
+                    },
+                    Limit: batchSize,
+                    ExclusiveStartKey: lastKey,
+                };
+
+                const result = await this.client.send(new QueryCommand(params));
+                const followers: UserDto[] = (result.Items || []).map(item => ({
+                    alias: item.follower_handle,
+                    firstName: item.firstName || "",
+                    lastName: item.lastName || "",
+                    imageUrl: item.imageUrl || ""
+                }));
+                yield followers;
+                lastKey = result.LastEvaluatedKey as {follower_handle: string; followee_handle:string} | undefined;
+                hasMore = !!lastKey;
+            }
+        }
+
     
 }

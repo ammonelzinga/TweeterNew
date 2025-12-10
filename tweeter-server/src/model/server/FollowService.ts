@@ -72,4 +72,19 @@ export class FollowService{
         await this.followDAO.unfollow(currentUserAlias, userToUnfollow);
 
       };
+
+      public async getAllFollowers (
+        userAlias: string
+      ): Promise<UserDto[]> {
+        return this.followDAO.getAllFollowers(userAlias);
+      }
+
+      public async *getFollowersPaginated(
+        userAlias: string,
+        batchSize: number = 10
+      ): AsyncGenerator<UserDto[], void, unknown> {
+        for await (const followerBatch of this.followDAO.getFollowersPaginated(userAlias, batchSize)) {
+          yield followerBatch;
+        }
+      }
 }

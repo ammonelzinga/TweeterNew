@@ -30,6 +30,13 @@ export class StatusService{
         token: string,
         newStatus: StatusDto
       ): Promise<void> {
-        await this.statusDAO.postStatus(newStatus);
+        await this.statusDAO.writeToStory(newStatus);
       };
+
+      public async writeStatusToFeed (
+        followerAlias: string,
+        status: StatusDto
+      ): Promise<void> {
+        await this.statusDAO.writeStatusToFeed(followerAlias, status);
+      }
 }
